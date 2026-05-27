@@ -69,6 +69,31 @@ class FirstDemo(QWidget):
         self.scan_button.clicked.connect(self.OK_scan_chain_shift)
         layout.addWidget(self.scan_button)
 
+        # add individual checkboxes and text boxes to control each bit of the WireIn for less mistakes and easier debugging.
+        WireIn_setup_layout = QHBoxLayout()
+        self.para_feed_input = QLineEdit("FFF")
+        self.parain_en_input = QCheckBox("parain_en")
+        self.ok_scan_in_input = QCheckBox("ok_scan_in")
+        self.rstn_ok_input = QCheckBox("rstn_ok")
+        self.pll_pdn_input = QCheckBox("pll_pdn")
+        self.pll_test_input = QCheckBox("pll_test")
+        self.frange_input = QCheckBox("frange")
+        self.pll_nmsx_sel_input = QCheckBox("pll_nmsx_sel")
+        self.lvds_ser_data_ctrl_input = QCheckBox("lvds_ser_data_ctrl")
+        self.ctrlB_input = QCheckBox("ctrlB")
+        WireIn_setup_layout.addWidget(QLabel("Para_feed:"))
+        WireIn_setup_layout.addWidget(self.para_feed_input)
+        WireIn_setup_layout.addWidget(self.parain_en_input)
+        WireIn_setup_layout.addWidget(self.ok_scan_in_input)
+        WireIn_setup_layout.addWidget(self.rstn_ok_input)
+        WireIn_setup_layout.addWidget(self.pll_pdn_input)
+        WireIn_setup_layout.addWidget(self.pll_test_input)
+        WireIn_setup_layout.addWidget(self.frange_input)
+        WireIn_setup_layout.addWidget(self.pll_nmsx_sel_input)
+        WireIn_setup_layout.addWidget(self.lvds_ser_data_ctrl_input)
+        WireIn_setup_layout.addWidget(self.ctrlB_input)
+        layout.addLayout(WireIn_setup_layout)
+
         wire_in_layout = QHBoxLayout()
         # add 10 labels to show the current WireIn value for debugging
         self.para_feed_label = QLabel("Para_feed : FFF")
@@ -131,7 +156,7 @@ class FirstDemo(QWidget):
         dev.UpdateWireOuts()
         scan_out = dev.GetWireOutValue(0x20) & 0xFFF  # only 12 bits are used
         for i in range(12):
-            self.leds[i].setState((scan_out >> i) & 0x1 == 1)
+            self.leds[12-1-i].setState((scan_out >> i) & 0x1 == 1)
 
     def set_scan_in(self):
         if self.scan_in_button.isChecked():
@@ -155,6 +180,19 @@ class FirstDemo(QWidget):
         dev.UpdateWireIns()
 
     def update_wirein_value(self):
+        # collect the values from the input fields and checkboxes to form the WireIn value
+        para_feed_value = int(self.para_feed_input.text(), 16) & 0xFFF
+        parain_en_value = 1 if self.parain_en_input.isChecked() else 0
+        ok_scan_in_value = 1 if self.ok_scan_in_input.isChecked() else 0
+        rstn_ok_value = 1 if self.rstn_ok_input.isChecked() else 0
+        pll_pdn_value = 1 if self.pll_pdn_input.isChecked() else 0
+        pll_test_value = 1 if self.pll_test_input.isChecked() else 0
+        frange_value = 1 if self.frange_input.isChecked() else 0
+        pll_nmsx_sel_value = 1 if self.pll_nmsx_sel_input.isChecked() else 0
+        lvds_ser_data_ctrl_value = 1 if self.lvds_ser_data_ctrl_input.isChecked() else 0
+        ctrlB_value = 1 if self.ctrlB_input.isChecked() else 0
+        wirein_value = (ctrlB_value << 20) | (lvds_ser_data_ctrl_value << 19) | (pll_nmsx_sel_value << 18) | (frange_value << 17) | (pll_test_value << 16) | (pll_pdn_value << 15) | (rstn_ok_value << 14) | (ok_scan_in_value << 13) | (parain_en_value << 12) | para_feed_value
+        dev.SetWireInValue(0x00, wirein_value)
         # read back from the current WireIn value and update the label
         dev.UpdateWireIns()
         curr_wirein_value = dev.GetWireInValue(0x00)[1]
