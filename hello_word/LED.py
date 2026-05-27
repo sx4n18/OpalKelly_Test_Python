@@ -1,34 +1,50 @@
 import ok
 
+# -------------------------------------------------------------------
+# FrontPanel 6.0 Initialization
+# -------------------------------------------------------------------
 
-## Create Front Panel object
-dev = ok.okCFrontPanel()
+devices = ok.FrontPanelDevices()
 
 # Open first detected device
-if dev.OpenBySerial("") != 0:
+dev = devices.Open()
+
+if dev is None:
     print("Failed to open device")
     exit()
 
 print("Device opened")
 
-# Configure FPGA (optional if already configured)
-dev.ConfigureFPGA("Top.bit")
+# Configure FPGA
+result = dev.ConfigureFPGA("Top.bit")
+
+if result != ok.ErrorCode.NoError:
+    print(f"FPGA configuration failed: {dev.GetErrorMessage(result)}")
+    exit()
+
+# Check FrontPanel support
+if not dev.IsFrontPanelEnabled():
+    print("FrontPanel support is not enabled")
+    exit()
+
+# Obtain FP6 Classic Data Port
+dp = dev.GetFPGADataPortClassic()
 
 print("LED ON")
 
 # Turn LED ON
-dev.SetWireInValue(0x00, 0x0001)
-dev.SetWireInValue( 0x01, 0x0001)
+dp.SetWireInValue(0x00, 0x0001)
+dp.SetWireInValue(0x01, 0x0001)
 
 # Push WireIns into FPGA
-dev.UpdateWireIns()
+dp.UpdateWireIns()
 
 print("LED now should be off")
 
 input("Press Enter to turn LED BACK ON...")
 
 # Turn LED OFF
-dev.SetWireInValue(0x00, 0x0000)
-dev.UpdateWireIns()
+dp.SetWireInValue(0x00, 0x0000)
+dp.UpdateWireIns()
 
 print("LED should be back ON")
