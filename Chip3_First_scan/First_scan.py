@@ -95,9 +95,14 @@ class FirstDemo(QWidget):
         layout.addWidget(self.scan_in_button)
 
         # Shift button
-        self.scan_button = QPushButton("Scan Chain Shift")
+        self.scan_button = QPushButton("OpalKelly Scan Chain Shift")
         self.scan_button.clicked.connect(self.OK_scan_chain_shift)
         layout.addWidget(self.scan_button)
+
+        # Shift button for chip's scan shift
+        self.chip_scan_button = QPushButton("Chip Scan Chain Shift")
+        self.chip_scan_button.clicked.connect(self.chip_scan_shift)
+        layout.addWidget(self.chip_scan_button)
 
         # -------------------------------------------------------------
         # WireIn Controls
@@ -218,6 +223,9 @@ class FirstDemo(QWidget):
 
     def OK_scan_chain_shift(self):
         dp.ActivateTriggerIn(0x40, 0)
+
+    def chip_scan_shift(self):
+        dp.ActivateTriggerIn(0x40, 1)
 
     def update_leds(self):
         dp.UpdateWireOuts()
