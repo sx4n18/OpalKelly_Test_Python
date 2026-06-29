@@ -175,3 +175,9 @@ set_property PACKAGE_PIN N3  [get_ports outN]
 set_property IOSTANDARD LVDS_25 [get_ports outN]
 
 set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets LVDS_OUT]
+
+set_property PACKAGE_PIN E3  [get_ports REF_CLK_B35]
+set_property IOSTANDARD LVCMOS25 [get_ports REF_CLK_B35]
+
+set_property PACKAGE_PIN B1  [get_ports div_clk_from_LVDS]
+set_property IOSTANDARD LVCMOS25 [get_ports div_clk_from_LVDS]

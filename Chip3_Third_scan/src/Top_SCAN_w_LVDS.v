@@ -53,8 +53,11 @@ module Top_SCAN_w_LVDS(
 	input          outP,        // LVDS P input from chip 
 	input          outN,        // LVDS N input from chip
 	
-	// board level 
+	// board level
+	output REF_CLK_B35,                  // This is the reference clock to show that testing point works, should swing for 2.5 V
+	output div_clk_from_LVDS,            // this is the div clock to be tapped out, should be 1/16 of the LVDS in.
 	output [7:0]   XEM7310LED
+	
     );
     
 ////////////////////////////////////////////////
@@ -90,6 +93,7 @@ CLK_DIVIDER divider_inst (
 assign PLL_FREF_TCK = clk_20m;
 assign pll_config_clk = clk_20m;
 
+assign REF_CLK_B35 = clk_20m;
 ////////////////////////////////////////////////
 // Deal with lvds input with bufds 
 
@@ -122,7 +126,7 @@ begin
     end
 end
 
-
+assign div_clk_from_LVDS = LVDS_REG_CNT[3];
 
 ////////////////////////////////////////////////
 // internal scan register to feed into the chip
