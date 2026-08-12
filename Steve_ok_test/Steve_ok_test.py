@@ -69,6 +69,10 @@ dp.SetWireInValue(0x00, 0x00000000)
 ## WireIn 0x01 = 0x00000000
 dp.SetWireInValue(0x01, 0x00000000)
 
+
+## release reset
+dp.SetWireInValue(0x01, 0x0008)
+
 dp.UpdateWireIns()
 
 
@@ -160,11 +164,13 @@ class OPTO_Test_GUI(QWidget):
         button_layout = QHBoxLayout()
         self.samp_hold_button = QPushButton("Sample/Hold")
         self.samp_hold_button.setCheckable(True)
+        self.samp_hold_button.setChecked(False)
         self.samp_hold_button.clicked.connect(self.update_samp_hold)
         button_layout.addWidget(self.samp_hold_button)
 
         self.rstn_ok_button = QPushButton("Reset OpalKelly")
         self.rstn_ok_button.setCheckable(True)
+        self.rstn_ok_button.setChecked(False)
         self.rstn_ok_button.clicked.connect(self.update_rstn_ok)
         button_layout.addWidget(self.rstn_ok_button)
 
@@ -225,13 +231,15 @@ class OPTO_Test_GUI(QWidget):
 
         layout.addLayout(button_layout_2)
 
+        ## set the layout
+        self.setLayout(layout)
+
         ## add a timer to update the leds every 100 ms
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_leds)
         self.timer.start(100)
 
-        ## set the layout
-        self.setLayout(layout)
+
 
 
 
@@ -253,45 +261,43 @@ class OPTO_Test_GUI(QWidget):
 
         dp.SetWireInValue(0x00, para_in34_1st_value)
         ## only update the lsb 2 bits of WireIn 0x01, keep the other bits unchanged
-        dp.SetWireInValue(0x01, para_in34_2nd_value, mask=0x0003)
+        dp.SetWireInValue(0x01, para_in34_2nd_value, 0x0003)
         dp.UpdateWireIns()
 
 
     def update_samp_hold(self):
         if self.samp_hold_button.isChecked():
-            dp.SetWireInValue(0x01, 0x0004, mask=0x0004)
+            dp.SetWireInValue(0x01, 0x0004, 0x0004)
 
         else:
-            dp.SetWireInValue(0x01, 0x0000, mask=0x0004)
+            dp.SetWireInValue(0x01, 0x0000, 0x0004)
 
         dp.UpdateWireIns()
 
     def update_rstn_ok(self):
         if self.rstn_ok_button.isChecked():
-            dp.SetWireInValue(0x01, 0x0008, mask=0x0008)
-            pass
+            dp.SetWireInValue(0x01, 0x0000, 0x0008)
         else:
-            dp.SetWireInValue(0x01, 0x0000, mask=0x0008)
-            pass
+            dp.SetWireInValue(0x01, 0x0008, 0x0008)
         dp.UpdateWireIns()
 
     def send_para_enable_trigger(self):
-        dp.ActivateTriggerIn(0x40, 0x0004)
+        dp.ActivateTriggerIn(0x40, 2)
 
     def send_auto_load_trigger(self):
         ## Send one schift clock first to load bit 33
-        dp.ActivateTriggerIn(0x40, 0x0001)
+        dp.ActivateTriggerIn(0x40, 0)
 
         ## loop 33 times to send shift enable and shift clock to load the rest of the bits
         for i in range(33):
-            dp.ActivateTriggerIn(0x40, 0x0002)
-            dp.ActivateTriggerIn(0x40, 0x0001)
+            dp.ActivateTriggerIn(0x40, 1)
+            dp.ActivateTriggerIn(0x40, 0)
 
     def send_manual_shift_trigger(self):
-        dp.ActivateTriggerIn(0x40, 0x0002)
+        dp.ActivateTriggerIn(0x40, 1)
 
     def send_manual_clock_trigger(self):
-        dp.ActivateTriggerIn(0x40, 0x0001)
+        dp.ActivateTriggerIn(0x40, 0)
 
     def update_leds(self):
         dp.UpdateWireOuts()
