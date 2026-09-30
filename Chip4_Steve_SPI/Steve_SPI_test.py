@@ -223,11 +223,11 @@ class SteveSPITest(QWidget):
         self.en_general_tick = QCheckBox("Enable General")
         self.fix_ref_tick = QCheckBox("Fix Reference")
         self.en_offset_amp_tick = QCheckBox("Enable Offset Amp")
-        node_cfg_tick_layout.addWidget(self.auto_hold_tick)
-        node_cfg_tick_layout.addWidget(self.offctrl_tick)
-        node_cfg_tick_layout.addWidget(self.en_general_tick)
-        node_cfg_tick_layout.addWidget(self.fix_ref_tick)
         node_cfg_tick_layout.addWidget(self.en_offset_amp_tick)
+        node_cfg_tick_layout.addWidget(self.fix_ref_tick)
+        node_cfg_tick_layout.addWidget(self.en_general_tick)
+        node_cfg_tick_layout.addWidget(self.offctrl_tick)
+        node_cfg_tick_layout.addWidget(self.auto_hold_tick)
         node_layout.addLayout(node_cfg_tick_layout)
 
         ### add a label and an input box for the offset value and a load button
