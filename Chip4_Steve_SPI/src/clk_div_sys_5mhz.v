@@ -6,7 +6,7 @@ module clk_div_sys_5mhz(
     output reg clk_out // 5 MHz clock
     );
 
-    reg [3:0] cnt; // 4-bit counter
+    reg [4:0] cnt; // 5-bit counter
 
     always @(posedge sys_clk or negedge rst_n) begin
         if (!rst_n) begin
