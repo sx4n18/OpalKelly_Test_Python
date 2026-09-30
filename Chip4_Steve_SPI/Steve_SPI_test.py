@@ -95,7 +95,9 @@ dp.SetWireInValue(0x03, 0x00000000)
 
 dp.UpdateWireIns()
 
-
+## release reset by setting ok_rstn to 1, which is bit 5 of WireIn 0x00
+dp.SetWireInValue(0x00, 0x00000020, 0x0020)
+dp.UpdateWireIns()
 
 #-------------------------------------------------------------------
 # define the main window class
@@ -233,7 +235,7 @@ class SteveSPITest(QWidget):
         self.offset_label = QLabel("Offset (0-31):")
         self.offset_input = QLineEdit()
         self.offset_load_button = QPushButton("SPI Load Node Settings")
-        self.offset_load_button.clicked.connect(self.spi_load_node_settings)
+        self.offset_load_button.clicked.connect(self.spi_load_nodecfg_settings)
         offset_cfg_layout.addWidget(self.offset_label)
         offset_cfg_layout.addWidget(self.offset_input)
         offset_cfg_layout.addWidget(self.offset_load_button)
@@ -380,19 +382,19 @@ class SteveSPITest(QWidget):
 
         ## update the range LEDs
         for i in range(3):
-            self.range_leds[i].setState((shift_reg_range_out >> i) & 0x01)
+            self.range_leds[2-i].setState((shift_reg_range_out >> i) & 0x01)
 
         ## update the address LEDs
         for i in range(10):
-            self.addr_leds[i].setState((shift_reg_addr_out >> i) & 0x01)
+            self.addr_leds[9-i].setState((shift_reg_addr_out >> i) & 0x01)
 
         ## update the clock configuration LEDs
         for i in range(3):
-            self.clock_leds[i].setState((shift_reg_clkcfg_out >> i) & 0x01)
+            self.clock_leds[2-i].setState((shift_reg_clkcfg_out >> i) & 0x01)
 
         ## update the node configuration LEDs
         for i in range(10):
-            self.nodecfg_leds[i].setState((shift_reg_nodecfg_out >> i) & 0x01)
+            self.nodecfg_leds[9-i].setState((shift_reg_nodecfg_out >> i) & 0x01)
 
     def spi_load_range(self):
         # Implementation for SPI load range
