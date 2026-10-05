@@ -1,4 +1,24 @@
-`timescale 1ns / 1ps
+`timescale 1ps/1fs
+//////////////////////////////////////////////////////////////////////////////////
+// Company:
+// Engineer:
+//
+// Create Date: 02.10.2026 15:49:08
+// Design Name:
+// Module Name: LVDS_training_blk
+// Project Name:
+// Target Devices:
+// Tool Versions:
+// Description:
+//
+// Dependencies:
+//
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+//
+//////////////////////////////////////////////////////////////////////////////////
+
 
 /////////////////////////////////////////////////////////////////////////////////////
 // This will be a simple interface that encapsulate the necessary logic to handle and train
@@ -16,16 +36,16 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 module LVDS_training_blk(
-    input wire CLK_P,
-    input wire CLK_N,
-    input wire DATA_P,
-    input wire DATA_N,
-    input wire rst_n,
-    input wire refclk,
-    output reg [7:0] data_out,
-    output reg data_valid,
-    output     mmcm_locked,         // the mmcm locked signal, this can be monitored by host to know our FSM's clock is valid now.
-    output reg TRN_DONE
+    input wire              CLK_P,
+    input wire              CLK_N,
+    input wire              DATA_P,
+    input wire              DATA_N,
+    input wire              rst_n,
+    input wire              refclk,
+    output reg [7:0]        data_out,
+    output reg              data_valid,
+    output                  mmcm_locked,         // the mmcm locked signal, this can be monitored by host to know our FSM's clock is valid now.
+    output                  TRN_DONE
 );
 
 // internal signals
@@ -57,9 +77,14 @@ IBUFDS #(
 
 // MMCM to generate the necessary clock for FSM and IDLEAYE2
 
-wire mmcm_clkfb;
-wire clk_300m;
+wire mmcm_clkfb_out, mmcm_clkfb_in;
+wire clk_300m,clk_300mB;
 wire clk_75m;
+wire clk_75m_in;
+wire mmcm_rst;
+
+assign mmcm_rst = ~rst_n;
+assign clk_75m_in = LVDS_clk;
 
 MMCME2_BASE #(
     .CLKIN1_PERIOD    (13.333),
@@ -74,17 +99,24 @@ MMCME2_BASE #(
 ) u_mmcm (
     .CLKIN1   (clk_75m_in),
 
-    .CLKFBOUT (mmcm_clkfb),
-    .CLKFBIN  (mmcm_clkfb),
+    .CLKFBOUT (mmcm_clkfb_out),
+    .CLKFBIN  (mmcm_clkfb_in),
 
-    .CLKOUT0  (clk_300m),
-    .CLKOUT1  (clk_75m),
+    .CLKOUT0  (clk_300m_raw),
+    .CLKOUT0B (clk_300mB),
+    .CLKOUT1  (clk_75m_raw),
 
     .LOCKED   (mmcm_locked),
 
     .RST      (mmcm_rst),
     .PWRDWN   (1'b0)
 );
+
+// bufg insertion
+BUFG u_bufg_fb  (.I(mmcm_clkfb_out), .O(mmcm_clkfb_in));  // CLKFBOUT -> BUFG -> CLKFBIN
+BUFG u_bufg_300 (.I(clk_300m_raw),   .O(clk_300m));
+BUFG u_bufg_75  (.I(clk_75m_raw),    .O(clk_75m));
+
 
 
 // IDELAYCTRL
@@ -104,7 +136,7 @@ wire INC, CE, LD;
 IDELAYE2 #(
    .CINVCTRL_SEL("FALSE"),          // Enable dynamic clock inversion (FALSE, TRUE)
    .DELAY_SRC("IDATAIN"),           // Delay input (IDATAIN, DATAIN)
-   .HIGH_PERFORMANCE_MODE("FALSE"), // Reduced jitter ("TRUE"), Reduced power ("FALSE")
+   .HIGH_PERFORMANCE_MODE("TRUE"), // Reduced jitter ("TRUE"), Reduced power ("FALSE")
    .IDELAY_TYPE("VAR_LOAD"),           // FIXED, VARIABLE, VAR_LOAD, VAR_LOAD_PIPE
    .IDELAY_VALUE(0),                // Input delay tap setting (0-31)
    .PIPE_SEL("FALSE"),              // Select pipelined mode, FALSE, TRUE
@@ -151,7 +183,7 @@ ISERDESE2 #(
    .SRVAL_Q4(1'b0)
 )
 ISERDESE2_inst (
-   .O(O),                       // 1-bit output: Combinatorial output
+   .O(),                       // 1-bit output: Combinatorial output
    // Q1 - Q8: 1-bit (each) output: Registered data outputs
    .Q1(Q[0]),
    .Q2(Q[1]),
@@ -170,12 +202,12 @@ ISERDESE2_inst (
                                 // position every time Bitslip is invoked (DDR operation is different from
                                 // SDR).
    // CE1, CE2: 1-bit (each) input: Data register clock enable inputs
-   .CE1(CE1_SERDES),
+   .CE1(1'b1),
    .CE2(),
    .CLKDIVP(),           // 1-bit input: TBD
    // Clocks: 1-bit (each) input: ISERDESE2 clock input ports
    .CLK(clk_300m),                   // 1-bit input: High-speed clock
-   .CLKB(),                 // 1-bit input: High-speed secondary clock
+   .CLKB(~clk_300m),                 // 1-bit input: High-speed secondary clock
    .CLKDIV(clk_75m),             // 1-bit input: Divided clock
    .OCLK(),                 // 1-bit input: High speed output clock used when INTERFACE_TYPE="MEMORY"
    // Dynamic Clock Inversions: 1-bit (each) input: Dynamic clock inversion pins to switch clock polarity
@@ -183,7 +215,7 @@ ISERDESE2_inst (
    .DYNCLKSEL(),       // 1-bit input: Dynamic CLK/CLKB inversion
    // Input Data: 1-bit (each) input: ISERDESE2 data input ports
    .D(),                       // 1-bit input: Data input
-   .DDLY(LVDS_data),                 // 1-bit input: Serial data from IDELAYE2
+   .DDLY(DATAOUT),                 // 1-bit input: Serial data from IDELAYE2
    .OFB(),                   // 1-bit input: Data feedback from OSERDESE2
    .OCLKB(),               // 1-bit input: High speed negative edge output clock
    .RST(~rst_n),                   // 1-bit input: Active high asynchronous reset
@@ -193,7 +225,7 @@ ISERDESE2_inst (
 );
 
 // FSM to control the IDELAYE2 and ISERDESE2
-LVDS_training_fsm u_LVDS_training_fsm (
+LVDS_training_fsm #(.INIT_TAP(5'd14)) u_LVDS_training_fsm (
     .clk(clk_75m),
     .rst_n(rst_n),
     .delay_rdy(delay_rdy),
@@ -204,7 +236,7 @@ LVDS_training_fsm u_LVDS_training_fsm (
     .CE(CE),
     .LD(LD),
     .BITSLIP(BITSLIP),
-    .CE1_SERDES(CE1_SERDES),
+    .LINK_UP(TRN_DONE),
     .data_from_ISERDES(Q)
 );
 
