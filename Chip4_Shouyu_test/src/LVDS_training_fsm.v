@@ -168,7 +168,7 @@ always @(posedge clk or negedge rst_n) begin
     end
 
     COLDATA1: begin
-        if (WORD_CNT >= 4'd8)
+        if (WORD_CNT >= 4'd7)
         begin
             WORD_CNT <= 4'd0;
         end
@@ -276,7 +276,7 @@ begin
 
     COLDATA1: begin
         WRD_VLD = 1'b1;     // the collected word is valid now;
-        if (WORD_CNT >= 4'd8)
+        if (WORD_CNT >= 4'd7)
         begin
             next_state = EVATAP;  // we have collected 8 words
         end
