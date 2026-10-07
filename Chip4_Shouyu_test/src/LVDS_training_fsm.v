@@ -58,6 +58,8 @@ module LVDS_training_fsm #(
 
     reg             WRD_VLD;   // singal to another evaluation module to check words consistency
     wire            EVA_FIN;   // signal from a sub machine for tap results evaluation.
+    reg             DAT_snap;
+    reg [7:0]       DAT_snapshot;
     // state machine definition
 
     reg [3:0] curr_state, next_state;
@@ -101,6 +103,42 @@ module LVDS_training_fsm #(
     assign LINK_UP    = 1'b0;
 */
 
+wire last_word, last_tapswp;
+wire [4:0] recom_tap_value;
+wire EYE_VLD;
+
+assign last_word = (WORD_CNT == 4'd7);
+assign last_tapswp = (TAPSWP_CNT == 6'd32);
+
+WRD_CON_EVAL  tap_eva_inst (
+    .clk(clk),
+    .rst_n(rst_n),
+    .WRD_COL({temp_word, data_from_ISERDES}), // the words collected during the tap sweep
+    .WRD_VLD(WRD_VLD), // the signal to indicate that the words are valid
+    .WORD_CNT(WORD_CNT[2:0]),  // number of word cnt
+    .last_wrd(last_word), // the signal to indicate that this is the last word of the 8 words collected, this basically means WRD_CNT == 7
+    .last_tapswp(last_tapswp), // the signal to indicate that this is the last tap sweep, this basically means TAPSWP_CNT == 32
+    .curr_TAP_VALUE(CNTVALUEOUT), // the current tap value
+
+    .EVA_FIN(EVA_FIN), // the signal to indicate that the evaluation is finished
+    .EYE_VALID(EYE_VLD), // the signal to indicate that a useable eye has been found,
+    .EVA_RESULT(recom_tap_value) // the result of the evaluation
+
+
+);
+
+// a simple data snapshot of the data from always
+always @(posedge clk or negedge rst_n)
+begin
+    if(!rst_n) begin
+        DAT_snapshot <= 0;
+    end
+    else if (DAT_snap) begin
+        DAT_snapshot <=  data_from_ISERDES;
+    end
+end
+
+
 
 // current state reg
 always @(posedge clk or negedge rst_n) begin
@@ -114,6 +152,7 @@ always @(posedge clk or negedge rst_n) begin
 end
 
 
+
 // registers update
 
 always @(posedge clk or negedge rst_n) begin
@@ -124,6 +163,8 @@ always @(posedge clk or negedge rst_n) begin
         DELAY_DONE  <= 0;
         LINK_UP     <= 0;
         TAPSWP_CNT  <= 6'd0;
+        WORD_CNT    <= 0;
+        DAT_snap    <= 0;
     end
     else begin
 
@@ -179,9 +220,12 @@ always @(posedge clk or negedge rst_n) begin
     end
 
     EVATAP: begin
-        if(TAPSWP_CNT >= 6'd32)
+        if(TAPSWP_CNT >= 6'd32 && EYE_VLD)
         begin
             TAPSWP_CNT <= 6'd0;
+            DELAY_DONE <= 1;
+            CNTVALUEIN <= recom_tap_value;
+            DAT_snap   <= 1;
         end
     end
 
@@ -288,7 +332,7 @@ begin
     EVATAP: begin
         if(EVA_FIN)        // current evaluation finished
         begin
-            if(TAPSWP_CNT >= 6'd32)            // all the taps are swept
+            if(EYE_VLD)            // all the taps are swept
             begin
                 next_state = CTREYE;
             end
@@ -301,13 +345,14 @@ begin
     CTREYE: begin
     // the state to apply the final tap to centre around the eye
     LD = 1;
+    next_state = WAIT;
     end
 
     PATBC1: begin
     // looking for word BC/4D
-    if(data_from_ISERDES == 8'hBC)
+    if(DAT_snapshot == 8'hBC)
         next_state = PAT4D1;
-    else if (data_from_ISERDES == 8'h4D)
+    else if (DAT_snapshot == 8'h4D)
         next_state = PAT4D2;
     else // did not get anything, we need to operate bitslip
         next_state = BITSLIP_ST;
@@ -315,7 +360,7 @@ begin
 
     PAT4D1: begin
     // we have found BC, now we need to look for another word 4D
-    if(data_from_ISERDES == 8'h4D)
+    if(DAT_snapshot == 8'h4D)
         next_state = PATBC2;
     else
         next_state = BITSLIP_ST;
@@ -323,7 +368,7 @@ begin
 
     PATBC2: begin
     // we have already had a BC4D or a 4D.
-    if(data_from_ISERDES == 8'hBC)
+    if(DAT_snapshot == 8'hBC)
         next_state = PAT4D2;
     else
         next_state = BITSLIP_ST;
@@ -331,7 +376,7 @@ begin
 
     PAT4D2: begin
     // last 4D to go so we should have at least had 4D,BC. or BC4D, BC.
-    if(data_from_ISERDES == 8'h4D)
+    if(DAT_snapshot == 8'h4D)
         next_state = DONE;
     else
         next_state = BITSLIP_ST;

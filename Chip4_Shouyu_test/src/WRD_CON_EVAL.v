@@ -1,5 +1,26 @@
 `timescale 1ps/1fs
 
+//////////////////////////////////////////////////////////////////////////////////
+// Company:
+// Engineer:
+//
+// Create Date: 10/07/2026 01:39:05 PM
+// Design Name:
+// Module Name: WRD_CON_EVAL
+// Project Name:
+// Target Devices:
+// Tool Versions:
+// Description:
+//
+// Dependencies:
+//
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+//
+//////////////////////////////////////////////////////////////////////////////////
+
+
 /////////////////////////////////////////////////////////////////////////////////
 // a simple module to evaluate the words collected during the tap sweep,
 // and decide if the link is up or not
@@ -9,6 +30,7 @@ module WRD_CON_EVAL(
     input  wire         rst_n,
     input  wire [15:0]  WRD_COL, // the words collected during the tap sweep
     input  wire         WRD_VLD, // the signal to indicate that the words are valid
+    input  wire [2:0]   WORD_CNT,  // number of word cnt
     input  wire         last_wrd, // the signal to indicate that this is the last word of the 8 words collected, this basically means WRD_CNT == 7
     input  wire         last_tapswp, // the signal to indicate that this is the last tap sweep, this basically means TAPSWP_CNT == 32
     input  wire [4:0]   curr_TAP_VALUE, // the current tap value
