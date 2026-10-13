@@ -80,7 +80,7 @@ module OK_SPI_test_top(
 
     ///////////////////////////////////////////////////
     // OK host interface instantiation
-    wire [65*2-1:0]  okEHx;
+    wire [65*1-1:0]  okEHx;
     wire okClk;
     wire [112:0] okHE;
     wire [64:0]  okEH;
@@ -102,7 +102,7 @@ okHost okHI(
 	.okEH(okEH)
 );
 
-okWireOR # (.N(2)) wireOR (okEH, okEHx);
+okWireOR # (.N(1)) wireOR (okEH, okEHx);
 
 
 okWireIn    wi00(.okHE(okHE),                             .ep_addr(8'h00), .ep_dataout(ep00WireIn));
