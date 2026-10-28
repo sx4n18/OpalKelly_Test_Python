@@ -9,6 +9,7 @@
 ## [8]   Latch
 ## [9]   SH
 ## -----------------
+## [10]  slow_rst   --> by default to be high
 ## WireIn 0x01:
 ## [9:0] parallel_data_addr
 ## [10]  nCS
@@ -28,6 +29,10 @@
 ##
 ## WireOut 0x20:
 ## [2:0] shift_reg_range_out
+## [5:3] DIGDATA2-0
+## [6]   ser_rep
+## [7]   shouyu_sync
+## [8]   slow_data
 ## WireOut 0x21:
 ## [9:0] shift_reg_addr_out
 ## WireOut 0x22:
@@ -81,8 +86,8 @@ dp = dev.GetFPGADataPortClassic()
 #-------------------------------------------------------------------
 # initialise the FPGA with the following values
 #-------------------------------------------------------------------
-# initialise WireIn 0x00 with 00_0000_1000
-dp.SetWireInValue(0x00, 0x00000008)
+# initialise WireIn 0x00 with 100_0000_1000
+dp.SetWireInValue(0x00, 0x00000408)
 
 # initialise WireIn 0x01 with 100_0000_0000
 dp.SetWireInValue(0x01, 0x00000400)
@@ -283,6 +288,12 @@ class SteveSPITest(QWidget):
         self.sh_button.clicked.connect(self.sample_hold)
         button_layout.addWidget(self.sh_button)
 
+        ### add a button for slow reset, which is a toggle button, when pressed, it will assert slow_rst to 0, and when released, it will deassert slow_rst to 1
+        self.slow_rst_button = QPushButton("Slow Reset")
+        self.slow_rst_button.setCheckable(True)
+        self.slow_rst_button.clicked.connect(self.slow_reset_button_clicked)
+        button_layout.addWidget(self.slow_rst_button)
+
         ## add the button_layout to the main layout
         layout.addLayout(button_layout)
 
@@ -370,6 +381,15 @@ class SteveSPITest(QWidget):
             dp.SetWireInValue(0x00, 0x00000000, 0x0200 )  # assert SH to 0
         dp.UpdateWireIns()
 
+    def slow_reset_button_clicked(self):
+        # Implementation for slow reset button functionality
+        ## get the button state of the slow_rst button, if it is checked, assert slow_rst to 0, otherwise assert slow_rst to 1
+        ## update bit 10 of the WireIn 0x00 to 0 or 1 based on the button state
+        if self.slow_rst_button.isChecked():
+            dp.SetWireInValue(0x00, 0x00000000, 0x0400 )  # assert slow_rst to 0
+        else:
+            dp.SetWireInValue(0x00, 0x00000400, 0x0400 )  # assert slow_rst to 1
+        dp.UpdateWireIns()
 
     def update_led_status(self):
         # Implementation for updating LED status based on WireOut values
