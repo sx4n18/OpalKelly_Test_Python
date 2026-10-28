@@ -18,7 +18,6 @@
 // Additional Comments:
 //
 //////////////////////////////////////////////////////////////////////////////////
-
 module Steve_SPI_ctrl(
     input  wire [4:0]   okUH,
 	output wire [2:0]   okHU,
@@ -36,6 +35,20 @@ module Steve_SPI_ctrl(
     output              nclk_set,
     output              node_sw,
     output              Latch,
+    /////////////////////////////
+    // newly added 9 ports 
+    // newly added square wave
+    output              Clk_inSC,     // --> this one should run at 100 Mhz
+    output              Slow_clk,     // --> this one should run at 5 mhz
+    output              slow_rst,     // added new reset
+    // added ports simply for connection
+    input               DIGDATA0,
+    input               DIGDATA1,
+    input               DIGDATA2, 
+    input               ser_rep,
+    input               shouyu_sync,
+    input               slow_data,
+    ///////////////////////////////
     output              SH
 
 
@@ -52,6 +65,9 @@ wire ok_rstn;       // this will be a controllable wire in bit
 wire sys_clk; // 200 MHZ CLOCK WITH PERIOD OF 5 ns
 wire clk5mhz; // 5 MHz clock for opalkelly and SPI
 
+reg  clk100mhz; // a simple 100 mhz clock
+
+
 IBUFGDS osc_clk(.O(sys_clk), .I(sys_clkp), .IB(sys_clkn));
 
 // clock divider to produce 5 MHz clock for SPI
@@ -61,7 +77,21 @@ clk_div_sys_5mhz clk_div_inst(
     .clk_out(clk5mhz)
 );
 
+// generate 100 mhz clock with a simple flip
+always @(posedge sys_clk or negedge ok_rstn)
+begin 
+    if(!ok_rstn)
+    begin 
+        clk100mhz <= 0;
+    end
+    else begin 
+        clk100mhz <= ~clk100mhz;
+    end
+end
 
+
+assign Clk_inSC = clk100mhz;
+assign Slow_clk =  clk5mhz;
 
 /////////////////////////// shift registers for each group  ///////////////////////////////
 
@@ -184,6 +214,7 @@ end
 // [8]   Latch
 // [9]   SH
 // -----------------
+// [10]  slow_rst   --> by default to be high
 // WireIn 0x01:
 // [9:0] parallel_data_addr
 // [10]  nCS
@@ -203,6 +234,10 @@ end
 //
 // WireOut 0x20:
 // [2:0] shift_reg_range_out
+// [5:3] DIGDATA2-0
+// [6]   ser_rep
+// [7]   shouyu_sync
+// [8]   slow_data
 // WireOut 0x21:
 // [9:0] shift_reg_addr_out
 // WireOut 0x22:
@@ -243,6 +278,7 @@ assign ok_rstn = ep00wire[5];
 assign mosi_sel = ep00wire[7:6];
 assign Latch = ep00wire[8];
 assign SH = ep00wire[9];
+assign slow_rst = ep00wire[10];
 
 // WireIn 0x01
 assign parallel_data_addr = ep01wire[9:0];
@@ -265,6 +301,10 @@ assign node_sw = ep03wire[10];
 
 // WireOut 0x20
 assign ep20wire[2:0] = shift_reg_range_out;
+assign ep20wire[5:3] = {DIGDATA2, DIGDATA1, DIGDATA0};
+assign ep20wire[6] = ser_rep;
+assign ep20wire[7] = shouyu_sync;
+assign ep20wire[8] = slow_data;
 // WireOut 0x21
 assign ep21wire[9:0] = shift_reg_addr_out;
 // WireOut 0x22

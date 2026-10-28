@@ -153,3 +153,33 @@ set_property IOSTANDARD LVCMOS33 [get_ports Latch]
 set_property PACKAGE_PIN V13  [get_ports SH]
 set_property IOSTANDARD LVCMOS33 [get_ports SH]
 
+## newly added new pins ######################################################
+set_property PACKAGE_PIN V15 [get_ports Clk_inSC]
+set_property IOSTANDARD LVCMOS33 [get_ports Clk_inSC]
+
+set_property PACKAGE_PIN Y11 [get_ports Slow_clk]
+set_property IOSTANDARD LVCMOS33 [get_ports Slow_clk]
+
+set_property PACKAGE_PIN Y12 [get_ports slow_rst]
+set_property IOSTANDARD LVCMOS33 [get_ports slow_rst]
+
+
+## SIMPLY FOR THE CONNECTIONS
+
+set_property PACKAGE_PIN Y1 [get_ports DIGDATA0]
+set_property IOSTANDARD LVCMOS33 [get_ports DIGDATA0]
+
+set_property PACKAGE_PIN Y2 [get_ports DIGDATA1]
+set_property IOSTANDARD LVCMOS33 [get_ports DIGDATA1]
+
+set_property PACKAGE_PIN W1 [get_ports DIGDATA2]
+set_property IOSTANDARD LVCMOS33 [get_ports DIGDATA2]
+
+set_property PACKAGE_PIN V3 [get_ports ser_rep]
+set_property IOSTANDARD LVCMOS33 [get_ports ser_rep]
+
+set_property PACKAGE_PIN U15 [get_ports shouyu_sync]
+set_property IOSTANDARD LVCMOS33 [get_ports shouyu_sync]
+
+set_property PACKAGE_PIN W2 [get_ports slow_data]
+set_property IOSTANDARD LVCMOS33 [get_ports slow_data]
